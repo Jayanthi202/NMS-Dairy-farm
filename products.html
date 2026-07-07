@@ -134,13 +134,12 @@
                     <p>Morning fresh cow milk — milked at 4:30 AM daily. Pure A1 protein, no water, no chemicals, no
                         preservatives.</p>
                     <div class="quality-badges">
-                        <span class="quality-badge a1">A1 Quality</span>
+                        <span class="quality-badge a1 active">A1 Quality</span>
                         <span class="quality-badge a2">A2 Quality</span>
                     </div>
                     <div class="card-actions">
                         <a class="btn btn-wa"
-                            href="https://wa.me/918122872843?text=Hi%20NMS%20Dairy%20Farm!%20I%27d%20like%20to%20order%20Fresh%20Cow%20Milk%20%5BPlease%20specify%20A1%20or%20A2%20Quality%5D."
-                            target="_blank" rel="noopener">
+                            href="index.html?milkType=Cow%20Milk&quality=A1%20Quality#order">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path
                                     d="M17.5 14.4c-.3-.1-1.7-.8-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.2 0-.4 0-.5 0-.1-.7-1.7-.9-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.2-.6-.4Z" />
@@ -163,12 +162,11 @@
                         sweets at home.</p>
                     <div class="quality-badges">
                         <span class="quality-badge a1">A1 Quality</span>
-                        <span class="quality-badge a2">A2 Quality</span>
+                        <span class="quality-badge a2 active">A2 Quality</span>
                     </div>
                     <div class="card-actions">
                         <a class="btn btn-wa"
-                            href="https://wa.me/918122872843?text=Hi%20NMS%20Dairy%20Farm!%20I%27d%20like%20to%20order%20Fresh%20Buffalo%20Milk%20%5BPlease%20specify%20A1%20or%20A2%20Quality%5D."
-                            target="_blank" rel="noopener">
+                            href="index.html?milkType=Buffalo%20Milk&quality=A2%20Quality#order">
                             <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                                 <path
                                     d="M17.5 14.4c-.3-.1-1.7-.8-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.5-2.4-1.5-.9-.8-1.5-1.8-1.6-2.1-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.3-.4.1-.2 0-.4 0-.5 0-.1-.7-1.7-.9-2.3-.3-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.4s1 2.8 1.2 3c.1.2 2 3 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.3.2 1.8.1.5-.1 1.7-.7 1.9-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.2-.6-.4Z" />
@@ -365,11 +363,28 @@
                 document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
             }
 
-            /* Quality Badges Selection for Cards */
+            /* Quality Badges Selection for Cards & Order Button Handling */
             document.querySelectorAll('.card').forEach(function (card) {
                 var badges = card.querySelectorAll('.quality-badge');
                 var waBtn = card.querySelector('.btn-wa');
-                if (badges.length > 0 && waBtn) {
+                var titleEl = card.querySelector('h3');
+                var title = titleEl ? titleEl.textContent.trim() : '';
+
+                var isMilk = title.toLowerCase().includes('milk') && !title.toLowerCase().includes('ghee') && !title.toLowerCase().includes('paneer') && !title.toLowerCase().includes('colostrum');
+
+                if (isMilk && waBtn) {
+                    var mType = title.toLowerCase().includes('buffalo') ? 'Buffalo Milk' : 'Cow Milk';
+                    
+                    badges.forEach(function (badge) {
+                        badge.style.cursor = 'pointer';
+                        badge.addEventListener('click', function () {
+                            badges.forEach(function (b) { b.classList.remove('active'); });
+                            badge.classList.add('active');
+                            var quality = badge.textContent.trim();
+                            waBtn.setAttribute('href', 'index.html?milkType=' + encodeURIComponent(mType) + '&quality=' + encodeURIComponent(quality) + '#order');
+                        });
+                    });
+                } else if (badges.length > 0 && waBtn) {
                     var originalHref = waBtn.getAttribute('href');
                     var baseHref = originalHref.replace('%20%5BPlease%20specify%20A1%20or%20A2%20Quality%5D', '').replace(/\s*\([^)]*\)$/, '');
                     badges.forEach(function (badge) {

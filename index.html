@@ -268,7 +268,7 @@
               <h3>Fresh Cow Milk</h3>
               <p>Morning fresh cow milk. No water, no chemicals.</p>
               <div class="quality-badges">
-                <span class="quality-badge a1">A1 Quality</span>
+                <span class="quality-badge a1 active">A1 Quality</span>
                 <span class="quality-badge a2">A2 Quality</span>
               </div>
               <div class="card-actions">
@@ -288,7 +288,7 @@
               <p>Rich, creamy buffalo milk.</p>
               <div class="quality-badges">
                 <span class="quality-badge a1">A1 Quality</span>
-                <span class="quality-badge a2">A2 Quality</span>
+                <span class="quality-badge a2 active">A2 Quality</span>
               </div>
               <div class="card-actions">
                 <a class="btn btn-wa"
@@ -482,7 +482,7 @@
               <label class="choice"><input type="radio" name="mt" value="Both Cow &amp; Buffalo Milk" class="sr-only">
                 Both</label>
             </div>
-            <span class="field-label">Quality</span>
+            <span class="field-label">Milk Quality</span>
             <div class="choice-wrap" id="qualityChoice">
               <label class="choice active"><input type="radio" name="quality" value="A1 Quality" checked class="sr-only"> A1 Quality</label>
               <label class="choice"><input type="radio" name="quality" value="A2 Quality" class="sr-only"> A2 Quality</label>
@@ -711,6 +711,35 @@
         document.querySelectorAll('#' + groupId + ' .choice').forEach(function (el) { el.classList.remove('active'); });
         clicked.classList.add('active');
       }
+      function selectOrderBuilderOptions(type, qual) {
+        if (type) {
+          milkType = type;
+          document.querySelectorAll('#milkChoice .choice').forEach(function (el) {
+            var input = el.querySelector('input');
+            if (input.value === type) {
+              el.classList.add('active');
+              input.checked = true;
+            } else {
+              el.classList.remove('active');
+              input.checked = false;
+            }
+          });
+        }
+        if (qual) {
+          quality = qual;
+          document.querySelectorAll('#qualityChoice .choice').forEach(function (el) {
+            var input = el.querySelector('input');
+            if (input.value === qual) {
+              el.classList.add('active');
+              input.checked = true;
+            } else {
+              el.classList.remove('active');
+              input.checked = false;
+            }
+          });
+        }
+        update();
+      }
       document.querySelectorAll('#milkChoice .choice').forEach(function (lbl) {
         lbl.addEventListener('click', function () { milkType = lbl.querySelector('input').value; setActive('milkChoice', lbl); update(); });
       });
@@ -729,6 +758,14 @@
         document.getElementById('orderWa').href = wa(msg);
       }
       update();
+
+      // Parse URL parameters for direct linking from products.html
+      var urlParams = new URLSearchParams(window.location.search);
+      var paramMilkType = urlParams.get('milkType');
+      var paramQuality = urlParams.get('quality');
+      if (paramMilkType || paramQuality) {
+        selectOrderBuilderOptions(paramMilkType, paramQuality);
+      }
 
       /* Mobile nav */
       var mNav = document.getElementById('mobileNav');
@@ -752,19 +789,59 @@
         document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
       }
 
-      /* Quality Badges Selection for Cards */
+      /* Quality Badges Selection for Cards & Order Button Handling */
       document.querySelectorAll('.card').forEach(function (card) {
         var badges = card.querySelectorAll('.quality-badge');
         var waBtn = card.querySelector('.btn-wa');
-        if (badges.length > 0 && waBtn) {
-          var originalHref = waBtn.getAttribute('href');
-          var baseHref = originalHref.replace('%20%5BPlease%20specify%20A1%20or%20A2%20Quality%5D', '');
+        var titleEl = card.querySelector('h3');
+        var title = titleEl ? titleEl.textContent.trim() : '';
+
+        // If it's Fresh Cow Milk or Fresh Buffalo Milk, intercept click
+        var isMilk = title.toLowerCase().includes('milk') && !title.toLowerCase().includes('ghee') && !title.toLowerCase().includes('paneer') && !title.toLowerCase().includes('colostrum');
+
+        if (isMilk && waBtn) {
+          waBtn.setAttribute('href', '#order');
+          waBtn.removeAttribute('target');
+          waBtn.removeAttribute('rel');
+          
+          waBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            // Determine Milk Type
+            var mType = 'Cow Milk';
+            if (title.toLowerCase().includes('buffalo')) {
+              mType = 'Buffalo Milk';
+            }
+            
+            // Find active quality badge on this card
+            var activeBadge = card.querySelector('.quality-badge.active');
+            var mQual = activeBadge ? activeBadge.textContent.trim() : (mType === 'Buffalo Milk' ? 'A2 Quality' : 'A1 Quality');
+            
+            // Sync to builder
+            selectOrderBuilderOptions(mType, mQual);
+            
+            // Scroll to the order section
+            var targetSec = document.getElementById('order');
+            if (targetSec) {
+              targetSec.scrollIntoView({ behavior: 'smooth' });
+            }
+          });
+        }
+
+        // Keep badges interactive
+        if (badges.length > 0) {
           badges.forEach(function (badge) {
+            badge.style.cursor = 'pointer';
             badge.addEventListener('click', function () {
               badges.forEach(function (b) { b.classList.remove('active'); });
               badge.classList.add('active');
-              var quality = badge.textContent.trim();
-              waBtn.setAttribute('href', baseHref + '%20(' + encodeURIComponent(quality) + ')');
+              
+              if (!isMilk && waBtn) {
+                var originalHref = waBtn.getAttribute('href');
+                var baseHref = originalHref.replace('%20%5BPlease%20specify%20A1%20or%20A2%20Quality%5D', '').replace(/\s*\([^)]*\)$/, '');
+                var quality = badge.textContent.trim();
+                waBtn.setAttribute('href', baseHref + ' (' + quality + ')');
+              }
             });
           });
         }
